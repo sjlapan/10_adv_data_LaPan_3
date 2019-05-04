@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func, inspect
 from sqlalchemy import desc
 
-from flask import Flask, jsonify,# request
+from flask import Flask, jsonify #, request
 
 
 ###########################################
@@ -81,15 +81,13 @@ def stations():
 def tobs():
     """Return dates & temps from a year before last datapoint"""
     results = (session
-               .query(Measurement.date, Station.tobs)
-               # Did I need the following join? Try again
-               .filter(Measurement.station == Station.station)
+               .query(Measurement.date, Measurement.tobs)
                .filter(Measurement.date > "2016-08-22")
                .order_by(Measurement.date)
                .all()
                )
      # Create dictionary
-     # For some reason, this code does not work, though in theory it should be exactly the same as the precipitation code?
+     
     last_12_temps = []
     for date, tobs in results:
         tobs_dict = {}
@@ -100,52 +98,48 @@ def tobs():
 
 
 @app.route("/api/v1.0/<start>")
-def vacation_dates_start():
+def vacation_dates_start(start):
     """Return JSON list of min, avg, and max temp
     for a given start or start-end range.
     For start date only, calculate for all dates >= start."""
-    # How do I specify user input for this query? Do I use the dates package?
     
-    start_date = request.args.get('start_date')
     results = (session
-                .query(Measurement.date, func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs))
-                .filter(Measurement.date >= start_date)
+                .query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs))
+                .filter(Measurement.date >= start)
                 .order_by(Measurement.date)
                 .all()
                 )
    
-    trip_summary = [] 
-    # Not sure how to specify the values that are operated on here
-    for date, prcp in results:
-        prcp_dict = {}
-        prcp_dict["date"] = date
-        prcp_dict["prcp"] = prcp
-        trip_summary.append(prcp_dict)
-    return jsonify(trip_summary)
+   
+    vaca_dict = {
+        "Min Temp": results[0][0],
+        "Max Temp": results[0][1],
+        "Avg Temp": results[0][2]
+        }
+        
+    return jsonify(vaca_dict)
 
-@app.route("/api/v1.0/api/v1.0/<start>/<end>")
-def vacation_dates_start_end():
+@app.route("/api/v1.0/<start>/<end>")
+def vacation_dates_start_end(start, end):
     """Return JSON list of min, avg, and max temp
     for a given start or start-end range.
     
     For start & end, calculate between, inclusive"""
 
-    start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
     results = (session
-                .query(Measurement.date, func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs))
-                .filter(Measurement.date >= start_date)
-                .filter(Measurement.date <= end_date)
+                .query(func.min(Measurement.tobs), func.max(Measurement.tobs), func.avg(Measurement.tobs))
+                .filter(Measurement.date >= start)
+                .filter(Measurement.date <= end)
                 .order_by(Measurement.date)
                 .all()
                 )
-    trip_summary = []
-    for date, prcp in results:
-        prcp_dict = {}
-        prcp_dict["date"] = date
-        prcp_dict["prcp"] = prcp
-        trip_summary.append(prcp_dict)
-    return jsonify(trip_summary)
+    vaca_dict = {
+        "Min Temp": results[0][0],
+        "Max Temp": results[0][1],
+        "Avg Temp": results[0][2]
+        }
+        
+    return jsonify(vaca_dict)
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
