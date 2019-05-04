@@ -142,4 +142,4 @@ def vacation_dates_start_end(start, end):
     return jsonify(vaca_dict)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
