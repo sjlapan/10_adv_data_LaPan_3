@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func, inspect
 from sqlalchemy import desc
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify,# request
 
 
 ###########################################
@@ -44,8 +44,8 @@ def welcome():
         f"/api/v1.0/precipitation<br/>"
         f"/api/v1.0/stations<br/>"
         f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/start?<br/>" 
-        f"/api/v1.0/start?/end?"
+        f"/api/v1.0/<start><br/>" 
+        f"/api/v1.0/<start>/<end>"
     )
 
 
@@ -82,6 +82,8 @@ def tobs():
     """Return dates & temps from a year before last datapoint"""
     results = (session
                .query(Measurement.date, Station.tobs)
+               # Did I need the following join? Try again
+               .filter(Measurement.station == Station.station)
                .filter(Measurement.date > "2016-08-22")
                .order_by(Measurement.date)
                .all()
@@ -97,7 +99,7 @@ def tobs():
     return jsonify(last_12_temps)
 
 
-@app.route("/api/v1.0/start?start_date")
+@app.route("/api/v1.0/<start>")
 def vacation_dates_start():
     """Return JSON list of min, avg, and max temp
     for a given start or start-end range.
@@ -121,7 +123,7 @@ def vacation_dates_start():
         trip_summary.append(prcp_dict)
     return jsonify(trip_summary)
 
-@app.route("/api/v1.0/api/v1.0/start?start_date/end_date")
+@app.route("/api/v1.0/api/v1.0/<start>/<end>")
 def vacation_dates_start_end():
     """Return JSON list of min, avg, and max temp
     for a given start or start-end range.
